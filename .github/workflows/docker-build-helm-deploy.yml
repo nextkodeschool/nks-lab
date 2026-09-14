@@ -1,0 +1,124 @@
+name: Docker Build Then Helm Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      ingress_enabled:
+        description: Enable Helm ingress
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_NAME: nextkode-lab
+  NAMESPACE: nextkode-lab
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  docker-build:
+    name: Build Stage - Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push database image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./database
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-database:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-database:latest
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-backend:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-backend:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-frontend:${{ env.IMAGE_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/nextkode-deploylab-frontend:latest
+
+  helm-deploy:
+    name: Deploy Stage - Helm
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        run: |
+          # Store base64 kubeconfig in GitHub Actions Secret KUBE_CONFIG_DATA.
+          mkdir -p "$HOME/.kube"
+          echo "$KUBE_CONFIG_DATA" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Deploy with Helm
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          STUDENT1_PASSWORD: ${{ secrets.STUDENT1_PASSWORD }}
+          STUDENT2_PASSWORD: ${{ secrets.STUDENT2_PASSWORD }}
+        run: |
+          # Helm deploys the image tag built in the Docker stage.
+          DATABASE_URL="postgresql://nextkode:${POSTGRES_PASSWORD}@database:5432/nextkode"
+          helm upgrade --install "$RELEASE_NAME" ./helm/nextkode-lab \
+            --namespace "$NAMESPACE" \
+            --create-namespace \
+            --set database.image.repository="${DOCKER_USERNAME}/nextkode-deploylab-database" \
+            --set backend.image.repository="${DOCKER_USERNAME}/nextkode-deploylab-backend" \
+            --set frontend.image.repository="${DOCKER_USERNAME}/nextkode-deploylab-frontend" \
+            --set database.image.tag="$IMAGE_TAG" \
+            --set backend.image.tag="$IMAGE_TAG" \
+            --set frontend.image.tag="$IMAGE_TAG" \
+            --set ingress.enabled="${{ inputs.ingress_enabled }}" \
+            --set-string secrets.postgresPassword="$POSTGRES_PASSWORD" \
+            --set-string secrets.databaseUrl="$DATABASE_URL" \
+            --set-string secrets.jwtSecret="$JWT_SECRET" \
+            --set-string secrets.adminPassword="$ADMIN_PASSWORD" \
+            --set-string secrets.student1Password="$STUDENT1_PASSWORD" \
+            --set-string secrets.student2Password="$STUDENT2_PASSWORD"
+
+      - name: Wait for rollouts
+        run: |
+          kubectl rollout status deploy/database -n "$NAMESPACE" --timeout=180s
+          kubectl rollout status deploy/backend -n "$NAMESPACE" --timeout=180s
+          kubectl rollout status deploy/frontend -n "$NAMESPACE" --timeout=180s

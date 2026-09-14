@@ -1,10 +1,12 @@
 services:
   database:
+    # PostgreSQL stores login users and student progress data.
     build:
       context: ./database
     container_name: nextkode-deploylab-database
     restart: unless-stopped
     environment:
+      # Values come from .env for local use; do not commit real passwords.
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -19,11 +21,13 @@ services:
       - app-network
 
   backend:
+    # FastAPI reads from PostgreSQL and sends data to the UI.
     build:
       context: ./backend
     container_name: nextkode-deploylab-backend
     restart: unless-stopped
     environment:
+      # Backend secrets stay in .env locally and GitHub Actions Secrets in CI/CD.
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
@@ -54,6 +58,7 @@ services:
       - app-network
 
   frontend:
+    # Nginx serves React and proxies /api requests to backend.
     build:
       context: ./frontend
       args:

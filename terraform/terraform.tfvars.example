@@ -1,0 +1,9 @@
+# Copy this file only for local experiments.
+# In GitHub Actions, secrets are passed as TF_VAR_* environment variables.
+
+aws_region            = "ap-south-1"
+app_name              = "nextkode-deploylab"
+environment           = "lab"
+backend_image_tag     = "latest"
+backend_desired_count = 0
+

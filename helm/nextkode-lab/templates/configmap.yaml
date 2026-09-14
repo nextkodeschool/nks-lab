@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nextkode-lab.fullname" . }}-config
+  labels:
+    {{- include "nextkode-lab.labels" . | nindent 4 }}
+data:
+  # ConfigMap stores non-sensitive values.
+  POSTGRES_DB: {{ .Values.config.postgresDb | quote }}
+  POSTGRES_USER: {{ .Values.config.postgresUser | quote }}
+  JWT_EXPIRE_MINUTES: {{ .Values.config.jwtExpireMinutes | quote }}
+  ADMIN_USERNAME: {{ .Values.config.adminUsername | quote }}
+  STUDENT1_USERNAME: {{ .Values.config.student1Username | quote }}
+  STUDENT2_USERNAME: {{ .Values.config.student2Username | quote }}

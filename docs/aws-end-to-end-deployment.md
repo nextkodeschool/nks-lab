@@ -2,6 +2,8 @@
 
 This guide deploys Next Kode School Lab on AWS using managed services.
 
+You can follow this manual AWS CLI process or use the Terraform module guide in `terraform/README.md`.
+
 Recommended classroom architecture:
 
 ```text
@@ -53,6 +55,9 @@ export POSTGRES_DB=nextkode
 export POSTGRES_USER=nextkode
 export POSTGRES_PASSWORD='replace-with-a-strong-password'
 export JWT_SECRET='replace-with-a-long-random-secret'
+export ADMIN_PASSWORD='replace-with-admin-password'
+export STUDENT1_PASSWORD='replace-with-student1-password'
+export STUDENT2_PASSWORD='replace-with-student2-password'
 ```
 
 Get your AWS account ID:
@@ -247,17 +252,17 @@ aws secretsmanager create-secret \
 
 aws secretsmanager create-secret \
   --name $APP_NAME/admin-password \
-  --secret-string "admin@123" \
+  --secret-string "$ADMIN_PASSWORD" \
   --region $AWS_REGION
 
 aws secretsmanager create-secret \
   --name $APP_NAME/student1-password \
-  --secret-string "student@1" \
+  --secret-string "$STUDENT1_PASSWORD" \
   --region $AWS_REGION
 
 aws secretsmanager create-secret \
   --name $APP_NAME/student2-password \
-  --secret-string "student@2" \
+  --secret-string "$STUDENT2_PASSWORD" \
   --region $AWS_REGION
 ```
 
@@ -598,9 +603,9 @@ curl $API_URL/health
 Login through the browser:
 
 ```text
-admin / admin@123
-student1 / student@1
-student2 / student@2
+admin / value from ADMIN_PASSWORD
+student1 / value from STUDENT1_PASSWORD
+student2 / value from STUDENT2_PASSWORD
 ```
 
 After login, verify:

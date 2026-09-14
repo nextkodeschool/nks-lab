@@ -1,0 +1,95 @@
+name: Kubernetes Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Existing Docker image tag to deploy
+        required: true
+        default: latest
+      deploy_ingress:
+        description: Apply ingress.yaml also
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+env:
+  NAMESPACE: nextkode-lab
+  IMAGE_TAG: ${{ inputs.image_tag }}
+
+jobs:
+  deploy:
+    name: Deploy Kubernetes Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        run: |
+          # Store base64 kubeconfig in GitHub Actions Secret KUBE_CONFIG_DATA.
+          mkdir -p "$HOME/.kube"
+          echo "$KUBE_CONFIG_DATA" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Prepare image names
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          # Replace sample image names with your Docker Hub images.
+          sed -i "s|your-dockerhub-username/nextkode-deploylab-database:latest|${DOCKER_USERNAME}/nextkode-deploylab-database:${IMAGE_TAG}|g" kubernetes/database.yaml
+          sed -i "s|your-dockerhub-username/nextkode-deploylab-backend:latest|${DOCKER_USERNAME}/nextkode-deploylab-backend:${IMAGE_TAG}|g" kubernetes/backend.yaml
+          sed -i "s|your-dockerhub-username/nextkode-deploylab-frontend:latest|${DOCKER_USERNAME}/nextkode-deploylab-frontend:${IMAGE_TAG}|g" kubernetes/frontend.yaml
+
+      - name: Apply namespace and config
+        run: |
+          kubectl apply -f kubernetes/namespace.yaml
+          kubectl apply -f kubernetes/configmap.yaml
+
+      - name: Create secret from GitHub Actions Secrets
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          STUDENT1_PASSWORD: ${{ secrets.STUDENT1_PASSWORD }}
+          STUDENT2_PASSWORD: ${{ secrets.STUDENT2_PASSWORD }}
+        run: |
+          # Sensitive values are injected at deploy time, not stored in Git.
+          DATABASE_URL="postgresql://nextkode:${POSTGRES_PASSWORD}@database:5432/nextkode"
+          kubectl create secret generic nextkode-lab-secret \
+            --namespace "$NAMESPACE" \
+            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+            --from-literal=DATABASE_URL="$DATABASE_URL" \
+            --from-literal=JWT_SECRET="$JWT_SECRET" \
+            --from-literal=ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+            --from-literal=STUDENT1_PASSWORD="$STUDENT1_PASSWORD" \
+            --from-literal=STUDENT2_PASSWORD="$STUDENT2_PASSWORD" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy application
+        run: |
+          kubectl apply -f kubernetes/database.yaml
+          kubectl apply -f kubernetes/backend.yaml
+          kubectl apply -f kubernetes/frontend.yaml
+
+      - name: Deploy ingress
+        if: ${{ inputs.deploy_ingress == 'true' }}
+        run: kubectl apply -f kubernetes/ingress.yaml
+
+      - name: Wait for rollouts
+        run: |
+          kubectl rollout status deploy/database -n "$NAMESPACE" --timeout=180s
+          kubectl rollout status deploy/backend -n "$NAMESPACE" --timeout=180s
+          kubectl rollout status deploy/frontend -n "$NAMESPACE" --timeout=180s

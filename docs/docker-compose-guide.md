@@ -41,20 +41,22 @@ Open `.env` and use values like these:
 ```env
 POSTGRES_DB=nextkode
 POSTGRES_USER=nextkode
-POSTGRES_PASSWORD=change_me
+POSTGRES_PASSWORD=replace_me_postgres_password
 
-JWT_SECRET=change_me_to_a_long_random_secret
+JWT_SECRET=replace_me_jwt_secret
 JWT_EXPIRE_MINUTES=60
 
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin@123
+ADMIN_PASSWORD=replace_me_admin_password
 STUDENT1_USERNAME=student1
-STUDENT1_PASSWORD=student@1
+STUDENT1_PASSWORD=replace_me_student1_password
 STUDENT2_USERNAME=student2
-STUDENT2_PASSWORD=student@2
+STUDENT2_PASSWORD=replace_me_student2_password
 
 BACKEND_PORT=8000
 ```
+
+For local Docker Compose, sensitive values live in `.env`. For CI/CD, use GitHub Actions Secrets instead of writing real passwords in workflow files.
 
 For Docker Compose, the backend database URL is built in `docker-compose.yml`:
 
@@ -110,9 +112,7 @@ http://localhost
 Login:
 
 ```text
-admin / admin@123
-student1 / student@1
-student2 / student@2
+Use the usernames and passwords from your .env file.
 ```
 
 ## 5. Verify Backend

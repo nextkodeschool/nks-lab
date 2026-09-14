@@ -33,3 +33,16 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Terraform local state and provider files
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform/terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

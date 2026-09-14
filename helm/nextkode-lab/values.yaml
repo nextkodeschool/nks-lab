@@ -1,0 +1,105 @@
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+config:
+  # Non-sensitive app settings used by the ConfigMap.
+  postgresDb: nextkode
+  postgresUser: nextkode
+  jwtExpireMinutes: "60"
+  adminUsername: admin
+  student1Username: student1
+  student2Username: student2
+
+secrets:
+  # Placeholder values. Use GitHub Actions Secrets or --set-string in real deploys.
+  postgresPassword: replace_me_postgres_password
+  jwtSecret: replace_me_jwt_secret
+  adminPassword: replace_me_admin_password
+  student1Password: replace_me_student1_password
+  student2Password: replace_me_student2_password
+  # GitHub Actions workflows build this from POSTGRES_PASSWORD.
+  databaseUrl: postgresql://nextkode:replace_me_postgres_password@database:5432/nextkode
+
+database:
+  enabled: true
+  image:
+    # Replace repository with your Docker Hub image.
+    repository: your-dockerhub-username/nextkode-deploylab-database
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    name: database
+    port: 5432
+  persistence:
+    # Keeps PostgreSQL data after pod restarts.
+    enabled: true
+    size: 1Gi
+    storageClassName: ""
+  probes:
+    readiness:
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+    liveness:
+      initialDelaySeconds: 30
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+backend:
+  replicas: 1
+  image:
+    # FastAPI image that reads progress from PostgreSQL.
+    repository: your-dockerhub-username/nextkode-deploylab-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    name: backend
+    type: ClusterIP
+    port: 8000
+  probes:
+    readiness:
+      initialDelaySeconds: 20
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+    liveness:
+      initialDelaySeconds: 30
+      periodSeconds: 20
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+frontend:
+  replicas: 1
+  image:
+    # React/Nginx image that students open in the browser.
+    repository: your-dockerhub-username/nextkode-deploylab-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    name: frontend
+    type: LoadBalancer
+    port: 80
+  probes:
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    liveness:
+      initialDelaySeconds: 15
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+ingress:
+  # Enable only when your cluster has an Ingress controller.
+  enabled: false
+  className: nginx
+  host: nextkode-lab.local
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  tls: []

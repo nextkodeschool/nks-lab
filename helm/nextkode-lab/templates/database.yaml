@@ -1,0 +1,121 @@
+{{- if .Values.database.enabled }}
+{{- if .Values.database.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  labels:
+    {{- include "nextkode-lab.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  # PVC keeps database data after pod restarts.
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.database.persistence.storageClassName }}
+  storageClassName: {{ .Values.database.persistence.storageClassName | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size | quote }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+  labels:
+    {{- include "nextkode-lab.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: database
+      {{- include "nextkode-lab.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: database
+        {{- include "nextkode-lab.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: database
+          # PostgreSQL image stores users and progress records.
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+          imagePullPolicy: {{ .Values.database.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: {{ .Values.database.service.port }}
+          env:
+            # Normal values come from ConfigMap; password comes from Secret.
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "nextkode-lab.fullname" . }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "nextkode-lab.fullname" . }}-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "nextkode-lab.fullname" . }}-secret
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            # Readiness waits until PostgreSQL can accept traffic.
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            initialDelaySeconds: {{ .Values.database.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.database.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.database.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.database.probes.readiness.failureThreshold }}
+          livenessProbe:
+            # Liveness restarts PostgreSQL when health checks fail.
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+            initialDelaySeconds: {{ .Values.database.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.database.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.database.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.database.probes.liveness.failureThreshold }}
+          {{- if .Values.database.persistence.enabled }}
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          {{- end }}
+      {{- if .Values.database.persistence.enabled }}
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.database.service.name }}
+  labels:
+    {{- include "nextkode-lab.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  # ClusterIP keeps PostgreSQL private inside the cluster.
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/component: database
+    {{- include "nextkode-lab.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: postgres
+      port: {{ .Values.database.service.port }}
+      targetPort: postgres
+{{- end }}

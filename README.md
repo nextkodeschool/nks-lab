@@ -101,11 +101,11 @@ cp .env.example .env
 POSTGRES_PASSWORD=your_database_password
 JWT_SECRET=your_long_random_jwt_secret
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin@123
+ADMIN_PASSWORD=your_admin_password
 STUDENT1_USERNAME=student1
-STUDENT1_PASSWORD=student@1
+STUDENT1_PASSWORD=your_student1_password
 STUDENT2_USERNAME=student2
-STUDENT2_PASSWORD=student@2
+STUDENT2_PASSWORD=your_student2_password
 ```
 
 3. Build and start the whole stack:
@@ -139,6 +139,10 @@ Use this when teaching what Docker Compose is doing behind the scenes:
 - [Complete Manual Docker and Docker Hub Guide](docs/docker-run-manual.md)
 - [AWS End-to-End Deployment Guide](docs/aws-end-to-end-deployment.md)
 - [Docker Compose Guide](docs/docker-compose-guide.md)
+- [Kubernetes Deployment Guide](kubernetes/README.md)
+- [Helm Deployment Guide](helm/nextkode-lab/README.md)
+- [Terraform AWS Infrastructure Guide](terraform/README.md)
+- [GitHub Actions Workflows](.github/workflows/README.md)
 
 ## Automatic Database Setup
 
@@ -160,6 +164,7 @@ The backend exposes:
 POST /api/auth/login
 GET  /api/user/profile
 GET  /api/deployment/status
+GET  /api/student/progress
 GET  /health
 ```
 
@@ -169,21 +174,19 @@ Use `.env` for local development. Do not commit `.env`.
 
 For GitHub Actions and production deployments, configure sensitive values with GitHub Secrets or the deployment platform's secret manager. Never place database passwords, JWT secrets, student passwords, Docker Hub tokens, or other secrets directly in source files or workflow files.
 
-The included workflow expects:
+The included workflows expect:
 
 ```text
-ADMIN_USERNAME
-ADMIN_PASSWORD
-STUDENT1_USERNAME
-STUDENT1_PASSWORD
-STUDENT2_USERNAME
-STUDENT2_PASSWORD
-POSTGRES_DB
-POSTGRES_USER
-POSTGRES_PASSWORD
-JWT_SECRET
 DOCKER_USERNAME
 DOCKER_PASSWORD
+KUBE_CONFIG_DATA
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+POSTGRES_PASSWORD
+JWT_SECRET
+ADMIN_PASSWORD
+STUDENT1_PASSWORD
+STUDENT2_PASSWORD
 ```
 
 `DOCKER_PASSWORD` should be a Docker Hub Personal Access Token.
@@ -194,6 +197,9 @@ Application usernames and passwords are runtime settings. They are not baked int
 The GitHub Actions workflow builds and pushes:
 
 ```text
+${DOCKER_USERNAME}/nextkode-deploylab-database:latest
+${DOCKER_USERNAME}/nextkode-deploylab-database:<git-sha>
+
 ${DOCKER_USERNAME}/nextkode-deploylab-frontend:latest
 ${DOCKER_USERNAME}/nextkode-deploylab-frontend:<git-sha>
 

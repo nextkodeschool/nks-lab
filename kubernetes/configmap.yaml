@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextkode-lab-config
+  namespace: nextkode-lab
+data:
+  # Non-sensitive settings are safe in a ConfigMap.
+  POSTGRES_DB: nextkode
+  POSTGRES_USER: nextkode
+  JWT_EXPIRE_MINUTES: "60"
+  ADMIN_USERNAME: admin
+  STUDENT1_USERNAME: student1
+  STUDENT2_USERNAME: student2
