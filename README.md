@@ -47,6 +47,46 @@ There are two ways to run this project with Docker:
 - **Docker Compose:** easiest path for students after they understand the services.
 - **Manual Docker Run:** starts each container one by one so students can see networking, env vars, volumes, and ports clearly.
 
+## Local Development Without Docker
+
+Use this path when you want to run the app directly on your machine.
+
+1. Create local environment files:
+
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env
+```
+
+2. Install backend dependencies:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+```
+
+3. Start the backend from the repository root:
+
+```bash
+.venv/bin/python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+
+4. Start the frontend in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5147
+```
+
+5. Open the app:
+
+```text
+http://127.0.0.1:5147
+```
+
+The local backend uses `local-dev.db` by default from the root `.env` file.
+
 ## Option 1: Docker Compose
 
 1. Create your local environment file:
@@ -93,6 +133,12 @@ Log in with any configured user from your `.env` file.
 Use this when teaching what Docker Compose is doing behind the scenes:
 
 [Manual Docker Run Guide](docs/docker-run-manual.md)
+
+## Deployment Guides
+
+- [Complete Manual Docker and Docker Hub Guide](docs/docker-run-manual.md)
+- [AWS End-to-End Deployment Guide](docs/aws-end-to-end-deployment.md)
+- [Docker Compose Guide](docs/docker-compose-guide.md)
 
 ## Automatic Database Setup
 

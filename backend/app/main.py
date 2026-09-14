@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from .auth import create_access_token, get_current_user, verify_password
 from .database import get_db
-from .models import DeploymentStatus, User
+from .models import CourseModule, DeploymentStatus, User, UserCourseProgress
 from .schemas import (
     DeploymentStatusResponse,
     LoginRequest,
+    StudentProgressResponse,
     TokenResponse,
     UserListItem,
     UserProfile,
@@ -83,6 +84,71 @@ def users(
         )
 
     return db.query(User).order_by(User.id.asc()).all()
+
+
+def progress_status_label(progress_percent: int) -> str:
+    if progress_percent >= 90:
+        return "Excellent"
+    if progress_percent >= 75:
+        return "On Track"
+    if progress_percent >= 50:
+        return "Building"
+    return "Needs Focus"
+
+
+@app.get("/api/student/progress", response_model=StudentProgressResponse)
+def student_progress(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    modules = db.query(CourseModule).order_by(CourseModule.position.asc()).all()
+    progress_rows = (
+        db.query(UserCourseProgress)
+        .filter(UserCourseProgress.user_id == current_user.id)
+        .all()
+    )
+    progress_by_module = {
+        progress.course_module_id: progress.progress_percent
+        for progress in progress_rows
+    }
+
+    courses = []
+    for module in modules:
+        progress_percent = progress_by_module.get(module.id, 0)
+        courses.append(
+            {
+                "id": module.id,
+                "title": module.title,
+                "skill": module.skill,
+                "icon": module.icon,
+                "accent": module.accent,
+                "accent_rgb": module.accent_rgb,
+                "summary": module.summary,
+                "progress_percent": progress_percent,
+                "status_label": progress_status_label(progress_percent),
+            }
+        )
+
+    total_modules = len(courses)
+    overall_progress = (
+        round(sum(course["progress_percent"] for course in courses) / total_modules)
+        if total_modules
+        else 0
+    )
+
+    return {
+        "summary": {
+            "overall_progress": overall_progress,
+            "total_modules": total_modules,
+            "strong_modules": sum(
+                1 for course in courses if course["progress_percent"] >= 80
+            ),
+            "in_progress_modules": sum(
+                1 for course in courses if 0 < course["progress_percent"] < 80
+            ),
+        },
+        "courses": courses,
+    }
 
 
 @app.get("/api/deployment/status", response_model=list[DeploymentStatusResponse])

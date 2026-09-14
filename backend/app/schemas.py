@@ -42,3 +42,27 @@ class DeploymentStatusResponse(BaseModel):
     message: str
 
     model_config = {"from_attributes": True}
+
+
+class CourseProgressItem(BaseModel):
+    id: int
+    title: str
+    skill: str
+    icon: str
+    accent: str
+    accent_rgb: str
+    summary: str
+    progress_percent: int
+    status_label: str
+
+
+class CourseProgressSummary(BaseModel):
+    overall_progress: int
+    total_modules: int
+    strong_modules: int
+    in_progress_modules: int
+
+
+class StudentProgressResponse(BaseModel):
+    summary: CourseProgressSummary
+    courses: list[CourseProgressItem]

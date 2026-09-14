@@ -323,6 +323,298 @@ input:focus {
   background: rgba(255, 214, 10, 0.08);
 }
 
+.progress-showcase {
+  margin-bottom: 22px;
+}
+
+.progress-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 148px;
+  gap: 24px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 28px;
+  margin-bottom: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 214, 10, 0.16), rgba(20, 184, 166, 0.12) 44%, rgba(5, 5, 5, 0.9)),
+    rgba(5, 5, 5, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 28px 90px rgba(0, 0, 0, 0.36);
+}
+
+.progress-hero .eyebrow {
+  margin: 0 0 12px;
+}
+
+.progress-hero h2 {
+  max-width: 760px;
+  color: #ffffff;
+  font-size: clamp(1.7rem, 3.6vw, 3.25rem);
+  line-height: 1.04;
+  margin: 0;
+}
+
+.progress-ring {
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  color: #ffffff;
+  background:
+    radial-gradient(circle, #10100b 58%, transparent 59%),
+    conic-gradient(#ffd60a var(--progress-deg), rgba(255, 255, 255, 0.12) 0);
+  box-shadow:
+    0 0 44px rgba(255, 214, 10, 0.24),
+    inset 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.progress-ring strong,
+.progress-ring span {
+  grid-area: 1 / 1;
+}
+
+.progress-ring strong {
+  font-size: 2rem;
+  line-height: 1;
+  transform: translateY(-8px);
+}
+
+.progress-ring span {
+  color: #d9c875;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  transform: translateY(24px);
+}
+
+.no-data-ring {
+  background:
+    radial-gradient(circle, #10100b 58%, transparent 59%),
+    conic-gradient(rgba(248, 113, 113, 0.72) 0deg, rgba(255, 255, 255, 0.12) 0);
+  box-shadow:
+    0 0 44px rgba(248, 113, 113, 0.18),
+    inset 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.no-data-ring strong {
+  color: #fecaca;
+  font-size: 1.22rem;
+  transform: translateY(-8px);
+}
+
+.no-data-ring span {
+  color: #fca5a5;
+}
+
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.progress-stats span {
+  display: grid;
+  gap: 2px;
+  min-height: 82px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #d7c988;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background: rgba(255, 214, 10, 0.055);
+}
+
+.progress-stats strong {
+  color: #ffffff;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.progress-stats strong:not(:only-child) {
+  overflow-wrap: anywhere;
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.course-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 14px;
+  min-height: 292px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--accent-rgb), 0.26);
+  border-radius: 8px;
+  padding: 18px;
+  color: #ffffff;
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), 0.16), rgba(255, 255, 255, 0.03) 42%, rgba(5, 5, 5, 0.88)),
+    rgba(8, 8, 8, 0.86);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 48px rgba(0, 0, 0, 0.28);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.course-card::before {
+  position: absolute;
+  inset: -1px;
+  content: "";
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 20% 0%, rgba(var(--accent-rgb), 0.36), transparent 44%);
+  transition: opacity 180ms ease;
+}
+
+.course-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.72);
+  transform: translateY(-4px);
+  background:
+    linear-gradient(145deg, rgba(var(--accent-rgb), 0.24), rgba(255, 255, 255, 0.045) 42%, rgba(5, 5, 5, 0.9)),
+    rgba(8, 8, 8, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(var(--accent-rgb), 0.12),
+    0 0 36px rgba(var(--accent-rgb), 0.32),
+    0 24px 58px rgba(0, 0, 0, 0.4);
+}
+
+.course-card:hover::before {
+  opacity: 1;
+}
+
+.course-icon,
+.course-heading,
+.course-card p,
+.course-meter,
+.course-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.course-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(var(--accent-rgb), 0.36);
+  border-radius: 8px;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.12);
+  box-shadow: 0 14px 28px rgba(var(--accent-rgb), 0.14);
+}
+
+.course-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.course-heading span {
+  color: #d9c875;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.course-heading h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.28rem;
+  line-height: 1.12;
+}
+
+.course-card p {
+  color: #d7c988;
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+.course-meter {
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.course-meter span {
+  display: block;
+  width: var(--progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), rgba(255, 255, 255, 0.86));
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.5);
+}
+
+.course-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.course-footer strong {
+  color: #ffffff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.course-footer span {
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 900;
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.no-data-card {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.no-data-card .course-meter {
+  border: 1px dashed rgba(var(--accent-rgb), 0.42);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.no-data-card .course-meter span {
+  width: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(var(--accent-rgb), 0.38) 0,
+    rgba(var(--accent-rgb), 0.38) 8px,
+    transparent 8px,
+    transparent 15px
+  );
+  box-shadow: none;
+}
+
+.no-data-card .course-footer strong,
+.no-data-card .course-footer span {
+  color: #fecaca;
+}
+
+.no-data-card .course-footer span {
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(248, 113, 113, 0.1);
+}
+
 .success-identity {
   display: inline-grid;
   gap: 4px;
@@ -359,6 +651,31 @@ input:focus {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 26px 86px rgba(0, 0, 0, 0.42);
+}
+
+.offline-card {
+  border-color: rgba(248, 113, 113, 0.28);
+  background:
+    linear-gradient(135deg, rgba(248, 113, 113, 0.14), rgba(255, 214, 10, 0.07)),
+    linear-gradient(145deg, rgba(19, 18, 11, 0.94), rgba(3, 3, 3, 0.92));
+}
+
+.offline-card .success-icon {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #ffffff;
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+  box-shadow: 0 22px 45px rgba(248, 113, 113, 0.16);
+}
+
+.offline-card .success-identity {
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fee2e2;
+  background: rgba(127, 29, 29, 0.44);
+  box-shadow: none;
+}
+
+.offline-card .success-identity span {
+  color: #fecaca;
 }
 
 .success-icon {
@@ -459,6 +776,16 @@ input:focus {
   font-size: 0.78rem;
 }
 
+.unavailable-node {
+  border-color: rgba(248, 113, 113, 0.24);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.unavailable-node svg,
+.unavailable-node strong {
+  color: #fca5a5;
+}
+
 .connector-arrow {
   justify-self: center;
   color: #facc15;
@@ -509,6 +836,26 @@ input:focus {
   background: #22c55e;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.68);
   animation: pulse 1.6s infinite;
+}
+
+.unavailable-card {
+  border-color: rgba(248, 113, 113, 0.22);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.unavailable-card .status-icon {
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+  box-shadow: 0 14px 30px rgba(248, 113, 113, 0.14);
+}
+
+.unavailable-card span {
+  color: #fecaca;
+}
+
+.unavailable-card i {
+  background: #ef4444;
+  animation: none;
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.48);
 }
 
 .student-card {
@@ -664,8 +1011,17 @@ input:focus {
 @media (max-width: 900px) {
   .login-grid,
   .dashboard-grid,
-  .status-grid {
+  .status-grid,
+  .progress-hero {
     grid-template-columns: 1fr;
+  }
+
+  .course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progress-ring {
+    justify-self: start;
   }
 
   .dashboard-header {
@@ -686,8 +1042,18 @@ input:focus {
 
   .login-card,
   .panel,
-  .success-card {
+  .success-card,
+  .progress-hero {
     padding: 18px;
+  }
+
+  .course-grid,
+  .progress-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .course-card {
+    min-height: 252px;
   }
 
   .top-nav {

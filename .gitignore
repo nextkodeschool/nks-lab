@@ -1,0 +1,35 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+!database/.env.example
+!frontend/.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local databases and runtime files
+local-dev.db
+*.sqlite
+*.sqlite3
+
+# Node / Vite
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
