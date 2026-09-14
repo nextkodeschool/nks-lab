@@ -71,16 +71,17 @@ function apiUrl(path) {
 }
 
 async function apiRequest(path, options = {}) {
+  const { skipAuth = false, headers = {}, ...requestOptions } = options;
   const token = localStorage.getItem(TOKEN_KEY);
   let response;
 
   try {
     response = await fetch(apiUrl(path), {
-      ...options,
+      ...requestOptions,
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
+        ...(token && !skipAuth ? { Authorization: `Bearer ${token}` } : {}),
+        ...headers,
       },
     });
   } catch (requestError) {
@@ -155,6 +156,33 @@ function canUseOfflineLogin(username, password) {
   return DEMO_USERS[normalizedUsername]?.password === password;
 }
 
+async function reconnectDemoSession(token) {
+  const username = getOfflineUsername(token) || getJwtUsername(token);
+  const demoUser = DEMO_USERS[username];
+
+  if (!demoUser) return "";
+
+  const data = await apiRequest("/api/auth/login", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify({
+      username,
+      password: demoUser.password,
+    }),
+  });
+
+  localStorage.setItem(TOKEN_KEY, data.access_token);
+  return data.access_token;
+}
+
+async function loadDashboardData() {
+  return Promise.allSettled([
+    apiRequest("/api/user/profile"),
+    apiRequest("/api/deployment/status"),
+    apiRequest("/api/student/progress"),
+  ]);
+}
+
 function App() {
   const [route, setRoute] = useState(window.location.pathname);
   const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY));
@@ -163,7 +191,7 @@ function App() {
     const onRouteChange = () => setRoute(window.location.pathname);
     window.addEventListener("popstate", onRouteChange);
     return () => window.removeEventListener("popstate", onRouteChange);
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (token && route === "/") navigate("/dashboard");
@@ -176,6 +204,11 @@ function App() {
     navigate("/dashboard");
   }
 
+  function handleTokenRefresh(accessToken) {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    setToken(accessToken);
+  }
+
   function handleLogout() {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -185,7 +218,7 @@ function App() {
   return (
     <main className="app-shell">
       {token && route === "/dashboard" ? (
-        <Dashboard onLogout={handleLogout} token={token} />
+        <Dashboard onLogout={handleLogout} onTokenRefresh={handleTokenRefresh} token={token} />
       ) : (
         <LoginPage onLogin={handleLogin} />
       )}
@@ -216,6 +249,7 @@ function LoginPage({ onLogin }) {
     try {
       const data = await apiRequest("/api/auth/login", {
         method: "POST",
+        skipAuth: true,
         body: JSON.stringify({ username, password }),
       });
       onLogin(data.access_token);
@@ -323,7 +357,7 @@ function LoginPage({ onLogin }) {
   );
 }
 
-function Dashboard({ onLogout, token }) {
+function Dashboard({ onLogout, onTokenRefresh, token }) {
   const [profile, setProfile] = useState(null);
   const [statuses, setStatuses] = useState([]);
   const [progressData, setProgressData] = useState(null);
@@ -341,11 +375,26 @@ function Dashboard({ onLogout, token }) {
     let active = true;
 
     async function loadDashboard() {
-      const [profileResult, statusResult, progressResult] = await Promise.allSettled([
-        apiRequest("/api/user/profile"),
-        apiRequest("/api/deployment/status"),
-        apiRequest("/api/student/progress"),
-      ]);
+      setError("");
+      setLoading(true);
+
+      let activeToken = token;
+      let [profileResult, statusResult, progressResult] = await loadDashboardData();
+
+      const shouldReconnect =
+        profileResult.status === "rejected" &&
+        profileResult.reason?.status === 401 &&
+        getOfflineProfile(activeToken);
+
+      if (shouldReconnect) {
+        try {
+          activeToken = await reconnectDemoSession(activeToken);
+          onTokenRefresh(activeToken);
+          [profileResult, statusResult, progressResult] = await loadDashboardData();
+        } catch {
+          activeToken = token;
+        }
+      }
 
       if (!active) return;
 
@@ -358,12 +407,12 @@ function Dashboard({ onLogout, token }) {
       setProfile(
         profileResult.status === "fulfilled"
           ? profileResult.value
-          : getOfflineProfile(token),
+          : getOfflineProfile(activeToken),
       );
       setStatuses(statusResult.status === "fulfilled" ? statusResult.value : []);
       setProgressData(progressResult.status === "fulfilled" ? progressResult.value : null);
 
-      if (!apiHealthy && !getOfflineProfile(token)) {
+      if (!apiHealthy && !getOfflineProfile(activeToken)) {
         setError("Backend unavailable");
       }
 
@@ -374,7 +423,7 @@ function Dashboard({ onLogout, token }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [token]);
 
   const statusByComponent = useMemo(
     () =>
